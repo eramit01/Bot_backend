@@ -15,9 +15,28 @@ const app = express();
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
-  : ["*"];
+  : [];
 
-console.log("Allowed CORS origins:", allowedOrigins);
+// Add localhost origins for development
+const devOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:4173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
+  "http://127.0.0.1:4173",
+  "http://127.0.0.1:3000",
+];
+
+// Combine allowed origins with dev origins, remove duplicates
+const allAllowedOrigins = allowedOrigins.includes("*")
+  ? ["*"]
+  : [...new Set([...allowedOrigins, ...devOrigins])];
+
+console.log("Allowed CORS origins:", allAllowedOrigins);
 
 app.use(
   cors({
@@ -25,15 +44,16 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.includes("*")) {
+      if (allAllowedOrigins.includes("*")) {
         return callback(null, true);
       }
       
-      if (allowedOrigins.includes(origin)) {
+      if (allAllowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       
       console.log(`CORS blocked origin: ${origin}`);
+      console.log(`Allowed origins: ${allAllowedOrigins.join(", ")}`);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
