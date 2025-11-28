@@ -22,9 +22,10 @@ const serviceSchema = new mongoose.Schema(
 const spaSchema = new mongoose.Schema(
   {
     spaId: { type: String, required: true, unique: true, index: true },
+    originalSpaId: { type: String, default: null },
     spaName: { type: String, required: true },
     botName: { type: String, default: "Ava" },
-    botImage: { type: String, default: "" },
+    botImage: { type: String, default: null },
     isActive: { type: Boolean, default: true },
     offer: { type: String, default: "" },
     colors: { type: colorSchema, default: () => ({}) },

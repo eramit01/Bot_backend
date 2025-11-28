@@ -9,6 +9,11 @@ const leadSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     services: [{ type: String }],
     message: { type: String },
+    source: {
+      type: String,
+      default: "chatbot",
+      enum: ["chatbot", "admin", "import", "unknown"],
+    },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

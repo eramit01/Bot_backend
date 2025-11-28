@@ -18,6 +18,3 @@ export const ensureDefaultAdmin = async () => {
   return user;
 };
 
-
-
-

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
+// this is updated code 
 
 import spaRoutes from "./routes/spas.js";
 import leadRoutes from "./routes/leads.js";
@@ -12,71 +13,17 @@ import { ensureDefaultAdmin } from "./utils/seedAdmin.js";
 dotenv.config();
 
 const app = express();
-
+app.use(express.static('public'));
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
-  : [];
-
-// Add localhost origins for development
-const devOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:4173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
-  "http://127.0.0.1:5175",
-  "http://127.0.0.1:4173",
-  "http://127.0.0.1:3000",
-];
-
-// Combine allowed origins with dev origins, remove duplicates
-const allAllowedOrigins = allowedOrigins.includes("*")
-  ? ["*"]
-  : [...new Set([...allowedOrigins, ...devOrigins])];
-
-// IMPORTANT: Allow iframe embedding from any origin for the chatbot widget
-// This is necessary because the chatbot iframe can be embedded on any website
-
-console.log("Allowed CORS origins:", allAllowedOrigins);
+  : ["*"];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      if (allAllowedOrigins.includes("*")) {
-        return callback(null, true);
-      }
-      
-      if (allAllowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      console.log(`CORS blocked origin: ${origin}`);
-      console.log(`Allowed origins: ${allAllowedOrigins.join(", ")}`);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: allowedOrigins.includes("*") ? true : allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// Add headers to allow iframe embedding (for chatbot widget)
-// Note: We don't set X-Frame-Options here because it would block iframe embedding
-// The chatbot widget needs to be embeddable on any website
-app.use((req, res, next) => {
-  // Only set CSP for API routes that serve the chatbot iframe content
-  // Allow iframe embedding from any origin for the chatbot widget
-  if (req.path.startsWith('/api/spas/config')) {
-    // Don't set restrictive headers for config endpoint
-    // This allows the chatbot iframe to be embedded anywhere
-  }
-  next();
-});
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -98,11 +45,15 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/spa-bot";
+console.log("Using MONGO_URI:", MONGO_URI);
 
+// Force connection to spa-bot database
 mongoose
-  .connect(MONGO_URI, { autoIndex: true })
+  .connect("mongodb://localhost:27017/spa-bot", { autoIndex: true })
   .then(async () => {
-    console.log("MongoDB connected");
+    console.log("MongoDB connected successfully");
+    console.log("Database name:", mongoose.connection.db.databaseName);
+    console.log("Connection readyState:", mongoose.connection.readyState);
     await ensureDefaultAdmin();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
